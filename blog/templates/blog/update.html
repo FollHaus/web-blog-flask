@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <h1>{% block title %}Edit "{{ post['title'] }}"{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <form method="post">
+        <label for="title">Название</label>
+        <input name="title" id="title"
+               value="{{ request.form['title'] or post['title'] }}" required>
+        <label for="tags">Теги (через запятую):</label>
+        <input name="tags" id="tags" placeholder="flask, python, web">
+        <label for="body">Статья</label>
+        <textarea name="body" id="body">{{ request.form['body'] or post['body'] }}</textarea>
+        <input type="submit" value="Сохранить">
+    </form>
+    <hr>
+    <form action="{{ url_for('blog.delete', id=post['id']) }}" method="post">
+        <input class="danger" type="submit" value="Удалить" onclick="return confirm('Are you sure?');">
+    </form>
+{% endblock %}

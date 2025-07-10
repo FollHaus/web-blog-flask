@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+
+{% block header %}
+    <h1>{% block title %} Статья {% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+    <article class="post">
+        <header>
+            <div>
+                <h1>{{ post['title'] }}</h1>
+                <div class="about">by {{ post.username }} on {{ post['created'].strftime('%Y-%m-%d') }}</div>
+                {% if tags %}
+                    <p><strong>Теги:</strong>
+                        {% for tag in tags %}
+                            <span class="tag">{{ tag }}</span>{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+
+            </div>
+        </header>
+        <p class="body">{{ post['body'] }}</p>
+        <h3>Комментарии:</h3>
+        {% if comments %}
+            <ul>
+                {% for post_comment in comments %}
+                    <li class="comment">
+                        <span> {{ post_comment.username }}  : {{ post_comment.body }} </span>
+                        <small> {{ post_comment.created }} </small>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Комментариев нет</p>
+        {% endif %}
+        <form action="{{ url_for('blog.comment') }}" method="post">
+            <input type="hidden" name="post_id" value="{{ post.id }}">
+            <textarea name="body" placeholder="Ваш комментарий"></textarea>
+            <button type="submit">Отправить</button>
+        </form>
+    </article>
+
+{% endblock %}

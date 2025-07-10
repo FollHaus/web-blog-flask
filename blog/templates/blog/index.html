@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <h1>
+    {% block title %} Posts {% endblock %}
+    {% if current_tag %}
+        — Тег: "{{ current_tag }}"
+        <a href="{{ url_for('blog.index') }}">Сбросить фильтр</a>
+    {% endif %}
+    </h1>
+
+    {% if g.user %}
+        <a class="action" href="{{ url_for('blog.create') }}">Добавить</a>
+        <a class="action" href="{{ url_for('blog.subscriptions') }}">Подписки</a>
+        <a class="action" href="{{ url_for('blog.access_requests') }}">Запросы на доступ</a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% for post in posts %}
+        <article class="post">
+            <header>
+                <div>
+                    {% set key = (g.user['id'], post['id']) %}
+                    {% set access_status = access_dict.get(key) %}
+                    {% if post['author_id'] == g.user['id'] or access_status == 1 %}
+                        <h1><a href="{{ url_for('blog.post_detail', id=post['id']) }}">{{ post['title'] }}</a></h1>
+                    {% else %}
+                        {% if post.is_private %}
+                            <h1>{{ post['title'] }}</h1>
+                        {% else %}
+                            <h1><a href="{{ url_for('blog.post_detail', id=post['id']) }}">{{ post['title'] }}</a></h1>
+                        {% endif %}
+                    {% endif %}
+                    <div class="about">by {{ post['username'] }} on {{ post['created'].strftime('%Y-%m-%d') }}</div>
+
+                    {% set tags = tags_dict.get(post['id'], []) %}
+                    {% if tags %}
+                        <div class="tags">
+                            Теги:
+                            {% for tag in tags %}
+                                <a class="tag" href="{{ url_for('blog.posts_by_tag', tag_name=tag) }}">{{ tag }}</a>
+                                {% if not loop.last %}, {%  endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                </div>
+                {% if g.user['id'] == post['author_id'] %}
+                    <a class="action" href="{{ url_for('blog.update', id=post['id']) }}">Редактировать</a>
+                    {% if post.is_private %}
+                        <button class="action" onclick="hidePost({{ post.id }}, 0)">Показать</button>
+                    {% else %}
+                        <button class="action" onclick="hidePost({{ post.id }}, 1)">Скрыть</button>
+                    {% endif %}
+                {% else %}
+                    {% if post['author_id'] not in follower %}
+                        <a class="action" href="{{ url_for('blog.subscribe', author_id=post['author_id']) }}">Подписаться</a>
+                    {% else %}
+                        <a class="action" href="{{ url_for('blog.unsubscribe', author_id=post['author_id']) }}">Отписаться</a>
+                    {% endif %}
+                {% endif %}
+            </header>
+            {% if post['author_id'] == g.user['id'] or access_status == 1 %}
+                <p class="body">{{ post['body'][:300] + '...' if post['body']|length > 300 else post['body'] }}</p>
+            {% else %}
+                {% if post.is_private %}
+                    <p class="body"><h2>Скрытый пост</h2></p>
+                    <button class="action" onclick="accessRequest({{ post.author_id }}, {{ g.user.id }},{{ post.id }})">
+                        Запросить доступ
+                    </button>
+                {% else %}
+                    <p class="body">{{ post['body'][:300] + '...' if post['body']|length > 300 else post['body'] }}</p>
+                {% endif %}
+            {% endif %}
+        </article>
+        {% if not loop.last %}
+            <hr>
+        {% endif %}
+    {% endfor %}
+{% endblock %}
+{% block scripts %}
+    <script>
+        function hidePost(postId, toggle) {
+            fetch("{{ url_for('blog.toggle_hide_post') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "post_id=" + postId + "&toggle=" + toggle
+            }).then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.reload();
+                }
+            });
+        }
+
+        function accessRequest(author_id, user_id, post_id) {
+            fetch("{{ url_for('blog.access_request') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "author_id=" + author_id + "&user_id=" + user_id + "&post_id=" + post_id
+            }).then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.reload();
+                }
+            });
+        }
+    </script>
+{% endblock %}
+
+

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+
+{% block header %}
+    <h1>{% block title %} Запросы на доступ {% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <h2>Запросы:</h2>
+
+    <ul>
+        {% for request in access_request %}
+            <li>
+                <h4>Запрос на доступ к статье: {{ request.post_title }}</h4>
+                <h4> Пользователь: {{ request.username }}
+                    {% set key = (request['user_requesting'], request['post_id']) %}
+                    {% set access_status = access_dict.get(key) %}
+                    {% if access_status %}
+                        <button class="action"
+                                onclick='giveAccess({{ request.user_requesting }},{{ request.post_id }})'>
+                            Закрыть доступ
+                        </button>
+                    {% else %}
+                        <button class="action"
+                                onclick='giveAccess({{ request.user_requesting }},{{ request.post_id }})'>
+                            Дать доступ
+                        </button>
+                    {% endif %}
+                </h4>
+            </li>
+        {% else %}
+            <li>Запросов на доступ нет</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('blog.index') }}">Назад</a>
+
+
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        function giveAccess(user_requesting, post_id) {
+            fetch("{{ url_for('blog.give_access') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "user_requesting=" + user_requesting + "&post_id=" + post_id
+            }).then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.reload();
+                }
+            });
+        }
+    </script>
+{% endblock %}

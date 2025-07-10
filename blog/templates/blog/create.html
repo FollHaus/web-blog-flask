@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <h1>{% block title %}Новый пост{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <form method="post">
+        <label for="title">Название</label>
+        <input name="title" id="title" value="{{ request.form['title'] }}" required>
+        <label for="tags">Теги (через запятую):</label>
+        <input name="tags" id="tags" placeholder="flask, python, web">
+        <label for="body">Текст</label>
+        <textarea name="body" id="body">{{ request.form['body'] }}</textarea>
+        <input type="submit" value="Save">
+    </form>
+{% endblock %}
